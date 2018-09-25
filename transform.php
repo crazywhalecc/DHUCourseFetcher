@@ -6,7 +6,11 @@
  * Time: 7:50 PM
  */
 
-function get_td_array($table){
+echo "请输入文件名：";
+$filename = trim(fgets(STDIN));
+transform($filename);
+
+function get_td_array($table) {
     $table = preg_replace("'<table[^>]*?>'si", "", $table);
     $table = preg_replace("'<tr[^>]*?>'si", "", $table);
     $table = preg_replace("'<td[^>]*?>'si", "", $table);
@@ -29,8 +33,9 @@ function get_td_array($table){
     return $td_array;
 }
 
-function transform($file_name){
-    $file_name = explode(".", $file_name)[0];
+function getClassCH($c) { return "第" . $c . "节"; }
+
+function transform($file_name) {
     $array = get_td_array(file_get_contents($file_name));//Your HTML element
     $right = [];
     $current_id = 0;
@@ -39,9 +44,15 @@ function transform($file_name){
     $current_class = "";
     $current_teacher = "";
     foreach ($array as $k => $v) {
-        //if (empty($v)) {echo "走了次！\n";continue;}
+        if (empty($v)) {
+            //echo "走了次！\n";
+            continue;
+        }
         $array_r = [];
-        //if(trim($v[0]) == "") {echo "走了一次！\n";continue;}
+        if (trim($v[0]) == "") {
+            //echo "走了一次！\n";
+            continue;
+        }
         if (mb_strstr(trim($v[0]), "周") === false) {
             for ($i = 0; $i < count($v); $i++) {
                 if (trim($v[$i]) == "") continue;
@@ -81,8 +92,7 @@ function transform($file_name){
                 }
             }
             $right[] = $array_r;
-        }
-        else {
+        } else {
             $array_r["id"] = $current_id;
             $array_r["course"] = $current_course;
             $array_r["score"] = $current_score;
@@ -96,8 +106,12 @@ function transform($file_name){
     }
     array_shift($right);
     array_pop($right);
-    array_pop($right);
+    $id_num = [];
     foreach ($right as $k => $v) {
+        if ($v["time"] == []) {
+            $id_num[] = $k;
+            continue;
+        }
         $right[$k]["id"] = $right[$k]["id"] . "_" . $right[$k]["class"];
         unset($right[$k]["class"]);
         if (!isset($right[$k]["room"])) $right[$k]["room"] = "";
@@ -106,7 +120,7 @@ function transform($file_name){
         $right[$k]["week"] = explode("—", $right[$k]["week"]);
         $right[$k]["time"] = mb_substr($right[$k]["time"], 0, -1);
         $right[$k]["time"] = explode(".", $right[$k]["time"]);
-        $week = $this->getWeekCH(array_shift($right[$k]["time"]));
+        $week = getWeekCH(array_shift($right[$k]["time"]));
         $s = $right[$k]["time"];
         $right[$k]["time"] = [];
         foreach ($s as $ks => $vs) {
@@ -115,6 +129,39 @@ function transform($file_name){
             ];
         }
     }
-    @mkdir("target");
+    if($id_num != []){
+        foreach($id_num as $v){
+            unset($right[$v]);
+        }
+    }
+
+    @mkdir("target/");
+    @mkdir("target/tmp_classtable");
     file_put_contents("target/" . $file_name . ".json", json_encode($right, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+}
+
+function getWeekCH($week) {
+    switch ($week) {
+        case 1:
+            return "周一";
+        case 2:
+            return "周二";
+        case 3:
+            return "周三";
+        case 4:
+            return "周四";
+        case 5:
+            return "周五";
+        case "周一":
+            return 1;
+        case "周二":
+            return 2;
+        case "周三":
+            return 3;
+        case "周四":
+            return 4;
+        case "周五":
+            return 5;
+    }
+    return null;
 }
