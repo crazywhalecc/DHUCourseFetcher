@@ -1,1 +1,3 @@
 # DHUCourseFetcher
+
+一个简易的将东华大学课表保存至txt的python脚本以及将html解析为数组或json的PHP脚本
